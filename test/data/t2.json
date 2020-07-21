@@ -1,0 +1,16 @@
+{
+
+    "ENTITY": {
+        "CASA": [
+          {
+            "amt_avg_credit_per_transaction_180_days": "sed ",
+            "amt_cummulative_maximum_balance_180_days": "sed "
+          }
+        ],
+        "WALLET": [ 
+          {
+            "amt_total_debit_transactions_360_days": "sed "
+          }
+      ]
+    }
+}

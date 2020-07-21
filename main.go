@@ -10,14 +10,14 @@ import (
 	"os"
 
 	jsonfilter "github.com/digitapai/jsonfilter/filter"
-)
-
-var (
-	dataFile   string
-	filterFile string
+	"github.com/yalp/jsonpath"
 )
 
 func main() {
+	var (
+		dataFile   string
+		filterFile string
+	)
 
 	flag.StringVar(&dataFile, "d", "", "")
 	flag.StringVar(&filterFile, "f", "", "")
@@ -49,15 +49,16 @@ func main() {
 		return
 	}
 
-	data = data
-	filter = filter
-
-	v, err := jsonfilter.FilterJsonFromText(string(data), string(filter))
+	v, err := ApplyFilter(data, filter)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
+	writeOutput(v)
+}
+
+func writeOutput(v interface{}) {
 	if b, err := json.Marshal(v); err == nil {
 		var out bytes.Buffer
 		if err = json.Indent(&out, b, "", "  "); err == nil {
@@ -70,8 +71,32 @@ func main() {
 
 }
 
-//CreateOutputJSON ... create a output as per client template
-func CreateOutputJSON(template []byte, input []byte) []byte {
+//ApplyFilter ... apply a filter on the input json
+//the filter json should be a matching subtree of the input JSON
+func ApplyFilter(input []byte, filter []byte) (interface{}, error) {
+	v, err := jsonfilter.FilterJsonFromTextWithFilterRunner(string(input), string(filter), func(command string, value string) (string, error) {
 
-	return nil
+		return value, nil
+	})
+
+	return v, err
+}
+
+//RunTemplate ... create a output as per template.
+//The template will contain a jsonpath based expression for each field.
+//This json path expression will be applied to the input JSON to read the value for the field.
+func RunTemplate(template []byte, input []byte) (interface{}, error) {
+
+	var data interface{}
+	json.Unmarshal(input, &data)
+
+	v, err := jsonfilter.FilterJsonFromTextWithFilterRunner(string(template), string(template), func(command string, value string) (string, error) {
+		filterval, _ := jsonpath.Read(data, value)
+		// fmt.Println(filterval)
+		ret := fmt.Sprintf("%v", filterval)
+		return ret, nil
+	})
+
+	return v, err
+
 }
